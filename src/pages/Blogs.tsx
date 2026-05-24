@@ -3,23 +3,13 @@ import { Link } from "react-router-dom";
 import { blogService, type BlogPost } from "../services/blogService";
 import { Calendar, User, ChevronRight, ArrowRight, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import SEOHead from "../components/layout/SEOHead";
 
 const Blogs = () => {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "Wellness Journal | Botanical Stories & Wisdom | PLEUX+";
-    
-    // SEO Meta Description
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (!metaDescription) {
-      metaDescription = document.createElement('meta');
-      metaDescription.setAttribute('name', 'description');
-      document.head.appendChild(metaDescription);
-    }
-    metaDescription.setAttribute('content', "Explore PLEUX+ Wellness Journal. Deep dives into botanical science, holistic skincare tips, and stories of balanced living from our botanical experts.");
-
     const fetchBlogs = async () => {
       const data = await blogService.getBlogs();
       setBlogs(data);
@@ -47,8 +37,28 @@ const Blogs = () => {
     );
   }
 
+  const seoDescription = "Explore PLEUX+ Wellness Journal. Deep dives into botanical science, holistic skincare tips, and stories of balanced living from our botanical experts.";
+
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title="Wellness Journal & Skincare Wisdom"
+        description={seoDescription}
+        url="/blogs"
+        keywords="wellness journal, botanical skincare blog, herbal beauty advice, organic ingredients"
+        jsonLd={{
+          "@type": "Blog",
+          name: "PLEUX+ Wellness Journal",
+          description: seoDescription,
+          url: "https://pleux.com/blogs",
+          blogPost: blogs.slice(0, 10).map((blog) => ({
+            "@type": "BlogPosting",
+            headline: blog.title,
+            url: `https://pleux.com/blog/${blog.id}`,
+            author: { "@type": "Person", name: blog.author },
+          }))
+        }}
+      />
       {/* Hero Header */}
       <section className="pt-12 md:pt-32 pb-16 px-4 bg-emerald-50/30">
         <div className="max-w-7xl mx-auto text-center">

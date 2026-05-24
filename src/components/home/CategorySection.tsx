@@ -5,6 +5,23 @@ import { useTheme } from "../../context/useTheme";
 
 const beautyCategories = [
   {
+    name: "New Launch",
+    desc: "Discover what's fresh",
+    emoji: "🌸",
+    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&q=90&auto=format",
+    color: "from-sage-100/50 to-stone-50",
+    link: "/products",
+  },
+  {
+  name: "Soap",
+  desc: "Pure cleansing essentials",
+  emoji: "🧼",
+  image: "https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?w=600&q=90&auto=format",
+  color: "from-emerald-100/50 to-stone-50",
+  link: "/products",
+},
+
+  {
     name: "Hair Care",
     desc: "Nourish from roots",
     emoji: "🌿",
@@ -28,14 +45,7 @@ const beautyCategories = [
     color: "from-teal-100/50 to-green-50",
     link: "/products",
   },
-  {
-    name: "New Launch",
-    desc: "Discover what's fresh",
-    emoji: "🌸",
-    image: "https://images.unsplash.com/photo-1615397323282-3112b329bc0b?w=600&q=80",
-    color: "from-sage-100/50 to-stone-50",
-    link: "/products",
-  },
+  
 ];
 
 const wellnessCategories = [

@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, X, ArrowLeft } from "lucide-react";
 import ProductCard from "../components/product/ProductCard";
 import { useProducts } from "../context/ProductContext";
 import { useTheme } from "../context/useTheme";
+import SEOHead from "../components/layout/SEOHead";
 
 const container: Variants = {
   hidden: { opacity: 0 },
@@ -39,10 +40,6 @@ const Products = () => {
   
   const categoryFilter = searchParams.get("category");
 
-  useEffect(() => {
-    document.title = "Shop Pure Botanicals | PLEUX+";
-  }, []);
-
   const filtered = products
     .filter((p) => p.section === section) // Strictly filter by current section
     .filter((p) => !categoryFilter || p.category === categoryFilter)
@@ -59,8 +56,35 @@ const Products = () => {
 
   const categories = Array.from(new Set(products.filter(p => p.section === section).map(p => p.category))).filter(Boolean) as string[];
 
+  const seoTitle = categoryFilter 
+    ? `Shop ${categoryFilter} | PLEUX+` 
+    : `Shop Pure Botanicals & Wellness | PLEUX+`;
+
+  const seoDescription = categoryFilter
+    ? `Explore our premium collection of botanical formulas in the ${categoryFilter} category. 100% natural, science-backed solutions.`
+    : `Browse the full collection of consciously crafted botanical formulas by PLEUX+. Active skincare and plant-based nutrition.`;
+
   return (
     <div className="min-h-screen bg-[#F9FBF9]">
+      <SEOHead
+        title={categoryFilter ? `Shop ${categoryFilter}` : "Shop Pure Botanicals"}
+        description={seoDescription}
+        url={categoryFilter ? `/products?category=${encodeURIComponent(categoryFilter)}` : "/products"}
+        keywords={`skincare products, ${categoryFilter || ''}, botanical cosmetics, natural beauty`}
+        jsonLd={{
+          "@type": "ItemList",
+          name: seoTitle,
+          description: seoDescription,
+          url: `https://pleux.com/products`,
+          numberOfItems: filtered.length,
+          itemListElement: filtered.slice(0, 10).map((p, idx) => ({
+            "@type": "ListItem",
+            position: idx + 1,
+            url: `https://pleux.com/product/${p.id}`,
+            name: p.name,
+          }))
+        }}
+      />
       {/* Header - theme aware */}
       <div className={`relative overflow-hidden py-20 md:py-28 ${section === "beauty" ? "bg-emerald-50/40" : "bg-purple-50/40"}`}>
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-100/50 rounded-full blur-[120px] pointer-events-none opacity-40" />

@@ -56,11 +56,12 @@ const Navbar = () => {
   const categories = isBeauty
     ? [
       { label: "New Launch", img: "https://images.unsplash.com/photo-1615397323282-3112b329bc0b?w=120&q=80" },
+      { label: "Soap", img: "https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?w=120&q=80" },
       { label: "Hair Care", img: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=120&q=80" },
       { label: "Skincare", img: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=120&q=80" },
       { label: "Serum", img: "https://images.unsplash.com/photo-1710410815589-dd83514104d0?w=120&q=80" },
       { label: "Face Care", img: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=120&q=80" },
-      { label: "Soap", img: "https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?w=120&q=80" },
+      
     ]
     : [
       { label: "Nutrition", img: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=120&q=80" },

@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Star, ShoppingBag, ArrowLeft, Check, Shield, Leaf, Truck, ChevronRight, Share2 } from "lucide-react";
 import { useCart } from "../hooks/useCart";
 import ProductCard from "../components/product/ProductCard";
+import ProductGallery from "../components/product/ProductGallery";
+import SEOHead from "../components/layout/SEOHead";
 import { useProducts } from "../context/ProductContext";
 import { useTheme } from "../context/useTheme";
 import ReviewSection from "../components/product/ReviewSection";
@@ -13,7 +15,7 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { products: allProducts, loading: globalLoading } = useProducts();
-  const { section } = useTheme();
+
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,6 +127,34 @@ const ProductDetails = () => {
 
   return (
     <div className="min-h-screen bg-[#F9FBF9]">
+      <SEOHead
+        title={product.name}
+        description={product.description || `Shop ${product.name} — premium botanical formula by PLEUX+. 100% natural, science-backed skincare.`}
+        url={`/product/${product.id}`}
+        image={product.image}
+        type="product"
+        keywords={`${product.name}, ${product.category || ''}, botanical skincare, PLEUX, premium beauty`}
+        jsonLd={{
+          "@type": "Product",
+          name: product.name,
+          description: product.description || "Premium botanical skincare formula",
+          image: product.images?.length ? product.images : [product.image],
+          brand: { "@type": "Brand", name: "PLEUX+" },
+          offers: {
+            "@type": "Offer",
+            price: product.price,
+            priceCurrency: "INR",
+            availability: "https://schema.org/InStock",
+            url: `https://pleux.com/product/${product.id}`,
+          },
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: product.rating ?? 4.5,
+            bestRating: 5,
+            ratingCount: 128,
+          },
+        }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
         {/* Breadcrumb */}
@@ -157,24 +187,11 @@ const ProductDetails = () => {
         </button>
 
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
-          {/* Image */}
-          <div className="relative">
-            <div className="aspect-[4/5] rounded-[3rem] overflow-hidden bg-white shadow-glow-soft border border-emerald-50">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src =
-                    "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=800&q=80";
-                }}
-              />
-            </div>
-            {/* Badge */}
-            <div className="absolute top-6 left-6">
-              <span className="badge !bg-white/90 backdrop-blur-md shadow-sm">🌿 100% Pure</span>
-            </div>
-          </div>
+          {/* Premium Multi-Image Gallery */}
+          <ProductGallery
+            images={product.images?.length ? product.images : [product.image]}
+            productName={product.name}
+          />
 
           {/* Info */}
           <div className="flex flex-col py-2">
@@ -321,12 +338,15 @@ const ProductDetails = () => {
               <span className="badge mb-4">Curated for you</span>
               <h2 className="font-serif text-4xl text-emerald-950 font-bold">Complete Your Ritual</h2>
             </div>
-            <Link to="/products" className="text-xs font-bold text-emerald-600 hover:text-emerald-800 uppercase tracking-[0.2em] border-b-2 border-emerald-100 pb-1 transition-all">
+            <Link
+              to="/products"
+              className="text-xs font-bold text-emerald-600 hover:text-emerald-800 uppercase tracking-[0.2em] border-b-2 border-emerald-100 pb-1 transition-all"
+            >
               See All Products
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
             {allProducts
               .filter((p) => p.id !== id && p.section === product.section)
               .slice(0, 4)
@@ -339,10 +359,10 @@ const ProductDetails = () => {
 
       {/* ⭐ Customer Reviews Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
-        <ReviewSection 
-          productId={product.id!} 
+        <ReviewSection
+          productId={product.id!}
           section={product.section as any}
-          themeColor={product.section === "wellness" ? "#9333ea" : "#10b981"} 
+          themeColor={product.section === "wellness" ? "#9333ea" : "#10b981"}
         />
       </div>
     </div>

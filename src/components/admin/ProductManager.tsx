@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Plus, Trash2, RefreshCw, UploadCloud, ImageIcon, Edit3 
-} from "lucide-react";
+import { Plus, Trash2, RefreshCw, ImageIcon, Edit3 } from "lucide-react";
+
 import { 
   getProducts, addProduct, updateProduct, deleteProduct, uploadProductImage 
 } from "../../services/productService";
@@ -14,10 +13,11 @@ const ProductManager: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [productForm, setProductForm] = useState(emptyProduct);
   const [loadingProducts, setLoadingProducts] = useState(true);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [productImagesFiles, setProductImagesFiles] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   const fetchData = async () => {
@@ -39,21 +39,41 @@ const ProductManager: React.FC = () => {
   }, []);
 
   const handleSubmit = async () => {
-    if (!imageFile && !editingProductId) return alert("Please select an image");
-    setUploadingImage(true);
+    // When creating: require 1-6 images.
+    // When editing: allow saving without changing images (backward compatible), but if new files are selected, check limit.
+    const fileCount = productImagesFiles.length;
+    if (!editingProductId && fileCount === 0) {
+      return alert("Please select at least one image (1-6 images required).");
+    }
+    if (fileCount > 6) {
+      return alert("You can upload a maximum of 6 images. Please remove some images.");
+    }
+
+    setUploadingImages(true);
     try {
-      let imageUrl = productForm.image;
-      if (imageFile) {
-        imageUrl = await uploadProductImage(imageFile);
+      // Upload images (if user picked new ones)
+      // (admin form currently doesn't type `images`, so we fall back to empty array)
+      let imagesUrls: string[] = [];
+
+
+      if (productImagesFiles.length > 0) {
+        const uploaded = await Promise.all(productImagesFiles.map((f) => uploadProductImage(f)));
+        imagesUrls = uploaded;
       }
 
+      // Ensure we always have a single `image` field for backward compatibility.
+      const imageUrl = imagesUrls[0] ?? productForm.image;
+
       const finalProduct = {
+
         ...productForm,
         image: imageUrl,
+        // Save multi-image array only when we have > 0 images.
+        images: imagesUrls.length > 0 ? imagesUrls : undefined,
         price: Number(productForm.price),
         rating: Number(productForm.rating) || 5,
         section: productForm.section as any,
-        category: productForm.category
+        category: productForm.category,
       };
 
       if (editingProductId) {
@@ -64,19 +84,20 @@ const ProductManager: React.FC = () => {
       }
 
       setProductForm(emptyProduct);
-      setImageFile(null);
-      setImagePreview(null);
+      setProductImagesFiles([]);
+      setImagePreviews([]);
       fetchData();
     } catch (error) {
       console.error(error);
       alert("Operation failed. Please check console for details.");
     } finally {
-      setUploadingImage(false);
+      setUploadingImages(false);
     }
   };
 
+
   return (
-    <div className="flex flex-col lg:grid lg:grid-cols-5 gap-6 md:gap-10 items-start animate-fade-in relative z-10 w-full overflow-hidden">
+      <div className="flex flex-col lg:grid lg:grid-cols-5 gap-6 md:gap-10 items-start animate-fade-in relative z-10 w-full">
       {/* Product Form Column */}
       <div className="lg:col-span-2 bg-white rounded-3xl shadow-card p-6 md:p-10 border border-emerald-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50" />
@@ -147,44 +168,93 @@ const ProductManager: React.FC = () => {
             onDrop={(e) => {
               e.preventDefault();
               setIsDragging(false);
-              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                setImageFile(e.dataTransfer.files[0]);
-                setImagePreview(URL.createObjectURL(e.dataTransfer.files[0]));
+              const files = Array.from(e.dataTransfer.files ?? []);
+              if (files.length > 0) {
+                if (files.length > 6) {
+                  alert("You can select a maximum of 6 images. Only the first 6 will be added.");
+                }
+                const limited = files.slice(0, 6);
+                setProductImagesFiles(limited);
+                setImagePreviews(limited.map((f) => URL.createObjectURL(f)));
               }
             }}
-            className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all ${isDragging ? "border-emerald-500 bg-emerald-50/50 scale-[1.02]" : "border-gray-100 hover:border-emerald-200"
-              } ${imagePreview ? "h-48" : "h-32"}`}
+            className={`relative border-2 border-dashed rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center transition-all ${isDragging ? "border-emerald-500 bg-emerald-50/50 scale-[1.02]" : "border-gray-100 hover:border-emerald-200"}
+              ${imagePreviews.length > 0 ? "min-h-[180px]" : "min-h-[120px]"}`}
           >
-            {imagePreview ? (
-              <div className="relative w-full h-full rounded-xl overflow-hidden group shadow-lg">
-                <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-[10px] font-black text-white uppercase tracking-widest">Replace Image</p>
+            {imagePreviews.length > 0 ? (
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] font-black text-charcoal uppercase tracking-widest">Selected Images</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProductImagesFiles([]);
+                      setImagePreviews([]);
+                    }}
+                    className="text-[10px] font-black text-red-500 hover:underline"
+                  >
+                    Clear
+                  </button>
                 </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setImageFile(e.target.files[0]);
-                      setImagePreview(URL.createObjectURL(e.target.files[0]));
-                    }
-                  }}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
+                <div className="grid grid-cols-3 gap-2">
+                  {imagePreviews.map((src, idx) => (
+                    <div key={`${src}-${idx}`} className="relative rounded-xl overflow-hidden border border-emerald-50 bg-white shadow-sm">
+                      <img src={src} className="w-full h-20 object-cover" alt={`Preview ${idx + 1}`} />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProductImagesFiles((prev) => prev.filter((_, i) => i !== idx));
+                          setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
+                        }}
+                        className="absolute top-1 right-1 w-7 h-7 rounded-full bg-black/50 text-white text-xs flex items-center justify-center"
+                        aria-label="Remove image"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      if (files.length > 0) {
+                        if (files.length > 6) {
+                          alert("You can select a maximum of 6 images. Only the first 6 will be added.");
+                        }
+                        const limited = files.slice(0, 6);
+                        setProductImagesFiles(limited);
+                        setImagePreviews(limited.map((f) => URL.createObjectURL(f)));
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="w-full py-2.5 rounded-xl bg-emerald-50 border border-emerald-100 text-center text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+                    Replace selection (click to re-upload, max 6)
+                  </div>
+                </div>
               </div>
             ) : (
               <>
                 <ImageIcon size={24} className="text-emerald-400 mb-2" />
-                <p className="text-[10px] font-black text-charcoal uppercase tracking-widest">Product Image</p>
-                <p className="text-[10px] text-gray-400 mt-1">or click to browse</p>
+                <p className="text-[10px] font-black text-charcoal uppercase tracking-widest">Product Images (1 - 6)</p>
+                <p className="text-[10px] text-gray-400 mt-1">Drag & drop or click to browse (1 to 6 images)</p>
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setImageFile(e.target.files[0]);
-                      setImagePreview(URL.createObjectURL(e.target.files[0]));
+                    const files = Array.from(e.target.files ?? []);
+                    if (files.length > 0) {
+                      if (files.length > 6) {
+                        alert("You can select a maximum of 6 images. Only the first 6 will be added.");
+                      }
+                      const limited = files.slice(0, 6);
+                      setProductImagesFiles(limited);
+                      setImagePreviews(limited.map((f) => URL.createObjectURL(f)));
                     }
                   }}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -193,17 +263,24 @@ const ProductManager: React.FC = () => {
             )}
           </div>
 
+
           <div className="flex items-center justify-between mb-1">
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Product Description</p>
             {editingProductId && (
               <button
-                onClick={() => { setEditingProductId(null); setProductForm(emptyProduct); setImagePreview(null); }}
+                onClick={() => {
+                  setEditingProductId(null);
+                  setProductForm(emptyProduct);
+                  setProductImagesFiles([]);
+                  setImagePreviews([]);
+                }}
                 className="text-[10px] font-black uppercase text-red-500 hover:underline"
               >
                 Cancel Edit
               </button>
             )}
           </div>
+
           <textarea
             placeholder="Describe the botanical benefits..."
             value={productForm.description}
@@ -212,13 +289,14 @@ const ProductManager: React.FC = () => {
           />
 
           <button
-            disabled={uploadingImage}
+            disabled={uploadingImages}
             onClick={handleSubmit}
             className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg transition-all ${editingProductId ? "bg-amber-500 hover:bg-amber-600 shadow-amber-200/50" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200/50"
               } text-white disabled:opacity-50`}
           >
-            {uploadingImage ? "Saving..." : editingProductId ? "Update Product" : "Add Product"}
+            {uploadingImages ? "Saving..." : editingProductId ? "Update Product" : "Add Product"}
           </button>
+
         </div>
       </div>
 
@@ -254,14 +332,19 @@ const ProductManager: React.FC = () => {
                     name: p.name,
                     price: String(p.price),
                     image: p.image,
+                    images: (p.images && p.images.length ? p.images : undefined),
                     description: p.description,
                     rating: String(p.rating || 5),
                     section: (p.section as "beauty" | "wellness") || "beauty",
                     category: p.category || ""
                   });
-                  setImagePreview(p.image);
+                  // Previews for currently saved images (no re-upload needed unless user changes selection)
+                  setProductImagesFiles([]);
+                  const currentImages = (p.images && p.images.length ? p.images : [p.image]).slice(0, 8);
+                  setImagePreviews(currentImages);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }} className="p-1.5 text-gray-300 hover:text-emerald-500 transition-colors"><Edit3 size={14} /></button>
+
                 <button onClick={() => deleteProduct(p.id!).then(fetchData)} className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
               </div>
             </div>

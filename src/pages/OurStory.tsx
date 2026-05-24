@@ -1,10 +1,28 @@
 import { motion } from "framer-motion";
 import { Sparkles, Heart, Leaf, ShieldCheck, ArrowRight, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import SEOHead from "../components/layout/SEOHead";
 
 const OurStory = () => {
    return (
       <div className="min-h-screen bg-white">
+         <SEOHead
+            title="Our Story & Botanical Philosophy"
+            description="Discover the story behind PLEUX+. A symphony of ancient botanical wisdom and modern clinical science, crafted to honor your body's natural biology."
+            url="/our-story"
+            keywords="brand story, skincare philosophy, clean beauty mission, organic sourcing"
+            jsonLd={{
+               "@type": "Organization",
+               name: "PLEUX+",
+               url: "https://pleux.com",
+               logo: "https://pleux.com/favicon.svg",
+               description: "Premium botanical skincare and plant-based wellness formulations.",
+               sameAs: [
+                  "https://instagram.com/pleux_official",
+                  "https://twitter.com/pleux_beauty"
+               ]
+            }}
+         />
          {/* Cinematic Hero */}
          <section className="relative h-screen flex items-center justify-center overflow-hidden bg-charcoal">
             <div className="absolute inset-0">

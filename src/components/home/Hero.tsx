@@ -21,7 +21,7 @@ const Hero = () => {
   const t = isBeauty ? green : purple;
 
   return (
-    <div id="hero-section" ref={ref} className={`relative w-full min-h-[calc(100svh-165px)] md:min-h-[calc(100svh-73px)] bg-gradient-to-br ${t.bg} overflow-hidden flex items-center`}>
+    <div id="hero-section" ref={ref} style={{ position: "relative" }} className={`relative w-full min-h-[calc(100svh-165px)] md:min-h-[calc(100svh-73px)] bg-gradient-to-br ${t.bg} overflow-hidden flex items-center`}>
 
       {/* Decorative glow orbs */}
       <div className={`absolute top-0 right-0 w-[55%] h-[55%] ${t.glow1} rounded-full blur-[130px] -translate-y-1/3 translate-x-1/4 pointer-events-none`} />

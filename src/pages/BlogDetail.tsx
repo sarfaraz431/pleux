@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { blogService, type BlogPost } from "../services/blogService";
 import { Calendar, User, ArrowLeft, Share2, Bookmark } from "lucide-react";
 import { motion } from "framer-motion";
+import SEOHead from "../components/layout/SEOHead";
 
 const BlogDetail = () => {
   const { id } = useParams();
@@ -11,57 +12,16 @@ const BlogDetail = () => {
   const [shared, setShared] = useState(false);
 
   useEffect(() => {
-    let scriptTag: HTMLScriptElement | null = null;
-
     const fetchBlog = async () => {
       if (id) {
         const data = await blogService.getBlogById(id);
         setBlog(data);
-        if (data) {
-          document.title = `${data.title} | PLEUX+ Wellness Journal`;
-
-          // SEO Meta Description
-          let metaDescription = document.querySelector('meta[name="description"]');
-          if (!metaDescription) {
-            metaDescription = document.createElement('meta');
-            metaDescription.setAttribute('name', 'description');
-            document.head.appendChild(metaDescription);
-          }
-          metaDescription.setAttribute('content', data.content.substring(0, 160).replace(/\n/g, ' '));
-
-          // JSON-LD Structured Data
-          const script = document.createElement('script');
-          script.type = 'application/ld+json';
-          script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            "headline": data.title,
-            "image": data.imageUrl,
-            "author": { "@type": "Person", "name": data.author },
-            "publisher": {
-              "@type": "Organization",
-              "name": "PLEUX",
-              "logo": { "@type": "ImageObject", "url": "https://pleux.plus/logo.png" }
-            },
-            "datePublished": data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-            "description": data.content.substring(0, 160),
-            "articleBody": data.content
-          });
-          document.head.appendChild(script);
-          scriptTag = script;
-        }
       }
       setLoading(false);
     };
 
     fetchBlog();
     window.scrollTo(0, 0);
-
-    return () => {
-      if (scriptTag) {
-        document.head.removeChild(scriptTag);
-      }
-    };
   }, [id]);
 
   const handleShare = async () => {
@@ -108,6 +68,28 @@ const BlogDetail = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={blog.title}
+        description={blog.content.substring(0, 160).replace(/\n/g, ' ')}
+        url={`/blog/${blog.id}`}
+        image={blog.imageUrl}
+        type="article"
+        keywords={`${blog.category}, wellness article, botanical insights, skincare`}
+        jsonLd={{
+          "@type": "BlogPosting",
+          headline: blog.title,
+          image: blog.imageUrl,
+          author: { "@type": "Person", name: blog.author },
+          publisher: {
+            "@type": "Organization",
+            name: "PLEUX+",
+            logo: { "@type": "ImageObject", url: "https://pleux.com/favicon.svg" }
+          },
+          datePublished: blog.createdAt?.toDate ? blog.createdAt.toDate().toISOString() : new Date().toISOString(),
+          description: blog.content.substring(0, 160),
+          articleBody: blog.content
+        }}
+      />
       {/* Header / Meta */}
       <article className="pt-12 md:pt-32 pb-20 px-4">
         <div className="max-w-3xl mx-auto">
